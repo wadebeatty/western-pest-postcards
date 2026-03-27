@@ -22,6 +22,10 @@ class PestRoutesService {
       city: lead.city || '',
       state: lead.state || 'UT',
       zip: lead.zip_code || lead.zip || '',
+      sourceID: 9,       // Facebook — matches existing source in PestRoutes
+      status: 2,         // Status 2 shows as new/pending lead in PestRoutes
+      smsReminders: 1,
+      emailReminders: 1,
     };
 
     logger.info('Creating PestRoutes customer from lead', { name: `${payload.fname} ${payload.lname}` });
