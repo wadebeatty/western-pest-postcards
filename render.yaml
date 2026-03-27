@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: western-pest-postcards
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: PRINTGENIE_API_KEY
+        sync: false
+      - key: WEBHOOK_SECRET
+        generateValue: true
+      - key: PORT
+        value: 3000
+      - key: LOG_LEVEL
+        value: info
+      - key: ADMIN_EMAIL
+        value: wade@wpest.com
