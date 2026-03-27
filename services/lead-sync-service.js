@@ -4,13 +4,32 @@ const logger = require('../utils/logger');
 class LeadSyncService {
   constructor() {
     this.pageAccessToken = process.env.META_PAGE_TOKEN || 'EAA0fbd4GgOYBRIGSstS7NleS7lfrwZCDZCB0tQTiICtKIIpgYXNSANS7dZCczCsfeEQM0oa4VjSmWaySFl6TZAcCoLe2atwhcbGpqZCDOhQULvTvmzwgltBmySFRbwt3Dss8UF2osd03Gkmm43Sh4sXqzNCHGXeC1lN8UZAdV4r4ZArxXZAZCEZCrZCoVzMRNsPUZA0guFlHdlaKbUyMZCFKhDeXPVx61e8OnM4xVBDxIZAZBTV';
-    this.formId = '1233959305559072';
+    // All active Western Pest lead forms
+    this.formIds = [
+      '1233959305559072', // Western Pest - Spring Leads 2026
+      '818330490677734',  // Western Pest - Scorpion Season 2026
+      '2602191403508867', // Western Pest - Rodent Control Artesia Terrace 2026
+      '1647893753069220'  // WPC Rodent Control Artesia 2026
+    ];
     this.lastChecked = new Date(Date.now() - 5 * 60 * 1000).toISOString();
     this.processedLeads = new Set();
   }
 
   async fetchNewLeads() {
-    const url = `https://graph.facebook.com/v19.0/${this.formId}/leads`;
+    const allLeads = [];
+    for (const formId of this.formIds) {
+      try {
+        const leads = await this.fetchLeadsFromForm(formId);
+        allLeads.push(...leads);
+      } catch (err) {
+        logger.warn(`Failed to fetch leads from form ${formId}:`, err.message);
+      }
+    }
+    return allLeads;
+  }
+
+  async fetchLeadsFromForm(formId) {
+    const url = `https://graph.facebook.com/v19.0/${formId}/leads`;
     const params = {
       access_token: this.pageAccessToken,
       fields: 'id,created_time,field_data',
