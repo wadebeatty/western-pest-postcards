@@ -28,7 +28,12 @@ class PestRoutesService {
       emailReminders: 1,
     };
 
-    logger.info('Creating PestRoutes customer from lead', { name: `${payload.fname} ${payload.lname}` });
+    // Include ad source in notes
+    if (lead._formName) {
+      payload.customerNotes = `Facebook Lead — Ad: ${lead._formName}`;
+    }
+
+    logger.info('Creating PestRoutes customer from lead', { name: `${payload.fname} ${payload.lname}`, source: lead._formName });
 
     const response = await axios.post(`${this.baseUrl}/customer/create`, payload, {
       headers: { 'Content-Type': 'application/json' }

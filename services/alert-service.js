@@ -28,7 +28,8 @@ class AlertService {
     const phone   = lead.phone_number || lead.phone || 'N/A';
     const address = [lead.street_address, lead.city, lead.state].filter(Boolean).join(', ');
 
-    const smsText = `🚨 NEW FB LEAD\n${name}\n📞 ${phone}\n📍 ${address}\nPestRoutes #${pestRoutesCustomerID}\nCALL NOW`;
+    const adSource = lead._formName ? `\n📣 ${lead._formName}` : '';
+    const smsText = `🚨 NEW FB LEAD\n${name}\n📞 ${phone}\n📍 ${address}${adSource}\nPestRoutes #${pestRoutesCustomerID}\nCALL NOW`;
 
     logger.info('Sending lead alerts to team', { lead: name });
 

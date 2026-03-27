@@ -4,12 +4,12 @@ const logger = require('../utils/logger');
 class LeadSyncService {
   constructor() {
     this.pageAccessToken = process.env.META_PAGE_TOKEN || 'EAA0fbd4GgOYBRIGSstS7NleS7lfrwZCDZCB0tQTiICtKIIpgYXNSANS7dZCczCsfeEQM0oa4VjSmWaySFl6TZAcCoLe2atwhcbGpqZCDOhQULvTvmzwgltBmySFRbwt3Dss8UF2osd03Gkmm43Sh4sXqzNCHGXeC1lN8UZAdV4r4ZArxXZAZCEZCrZCoVzMRNsPUZA0guFlHdlaKbUyMZCFKhDeXPVx61e8OnM4xVBDxIZAZBTV';
-    // All active Western Pest lead forms
-    this.formIds = [
-      '1233959305559072', // Western Pest - Spring Leads 2026
-      '818330490677734',  // Western Pest - Scorpion Season 2026
-      '2602191403508867', // Western Pest - Rodent Control Artesia Terrace 2026
-      '1647893753069220'  // WPC Rodent Control Artesia 2026
+    // All active Western Pest lead forms — { id, name }
+    this.forms = [
+      { id: '1233959305559072', name: 'Spring Leads 2026'              },
+      { id: '818330490677734',  name: 'Scorpion Season 2026'           },
+      { id: '2602191403508867', name: 'Rodent Control — Artesia Terrace' },
+      { id: '1647893753069220', name: 'Artesia Rodent Control 2026'    }
     ];
     this.lastChecked = new Date(Date.now() - 5 * 60 * 1000).toISOString();
     this.processedLeads = new Set();
@@ -17,12 +17,14 @@ class LeadSyncService {
 
   async fetchNewLeads() {
     const allLeads = [];
-    for (const formId of this.formIds) {
+    for (const form of this.forms) {
       try {
-        const leads = await this.fetchLeadsFromForm(formId);
+        const leads = await this.fetchLeadsFromForm(form.id);
+        // Tag each lead with the form/ad name
+        leads.forEach(l => l._formName = form.name);
         allLeads.push(...leads);
       } catch (err) {
-        logger.warn(`Failed to fetch leads from form ${formId}:`, err.message);
+        logger.warn(`Failed to fetch leads from form ${form.id}:`, err.message);
       }
     }
     return allLeads;
