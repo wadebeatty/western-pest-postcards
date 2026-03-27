@@ -1,4 +1,4 @@
-const twilio = require('twilio');
+const { execSync } = require('child_process');
 const logger = require('../utils/logger');
 
 const SMS_TEAM = [
@@ -11,19 +11,16 @@ const SMS_TEAM = [
 ];
 
 class AlertService {
-  constructor() {
-    // Supports both API Key (SK...) and main Auth Token auth
-    const sid   = process.env.TWILIO_SID   || process.env.TWILIO_SID || '';
-    const token = process.env.TWILIO_TOKEN;
-    const apiKey   = process.env.TWILIO_API_KEY;
-    const apiSecret = process.env.TWILIO_API_SECRET;
-
-    if (apiKey && apiSecret) {
-      this.client = twilio(apiKey, apiSecret, { accountSid: sid });
-    } else {
-      this.client = twilio(sid, token);
+  sendSMS(phone, message) {
+    try {
+      // Use imsg via macOS Messages.app — works immediately, no registration needed
+      const escaped = message.replace(/"/g, '\\"').replace(/\n/g, ' ');
+      execSync(`imsg send --to "${phone}" --text "${escaped}" --service sms`, { timeout: 10000 });
+      return true;
+    } catch (err) {
+      logger.warn(`imsg SMS to ${phone} failed: ${err.message}`);
+      return false;
     }
-    this.from = process.env.TWILIO_FROM || '+18773698146';
   }
 
   async sendLeadAlert(lead, pestRoutesCustomerID) {
@@ -33,17 +30,12 @@ class AlertService {
 
     const smsText = `🚨 NEW FB LEAD\n${name}\n📞 ${phone}\n📍 ${address}\nPestRoutes #${pestRoutesCustomerID}\nCALL NOW`;
 
-    const smsPromises = SMS_TEAM.map(member =>
-      this.client.messages.create({
-        body: smsText,
-        from: this.from,
-        to: member.phone
-      }).then(() => logger.info(`SMS sent to ${member.name}`))
-        .catch(err => logger.warn(`SMS to ${member.name} failed: ${err.message}`))
-    );
+    logger.info('Sending lead alerts to team', { lead: name });
 
-    await Promise.all(smsPromises);
-    logger.info('Lead alerts sent', { lead: name, recipients: SMS_TEAM.length });
+    for (const member of SMS_TEAM) {
+      const ok = this.sendSMS(member.phone, smsText);
+      logger.info(`Alert to ${member.name}: ${ok ? 'sent' : 'failed'}`);
+    }
   }
 }
 
