@@ -10,41 +10,73 @@ class PestRoutesService {
   }
 
   async createCustomerFromLead(lead) {
+    const firstName = lead.first_name || lead.full_name?.split(' ')[0] || lead.firstName || '';
+    const lastName  = lead.last_name  || lead.full_name?.split(' ').slice(1).join(' ') || lead.lastName || '';
+    const phone     = lead.phone_number || lead.phone || '';
+    const zip       = lead.zip_code || lead.zip || '';
+
     const payload = {
       authenticationKey: this.authKey,
       authenticationToken: this.authToken,
       officeID: this.officeID,
-      fname: lead.first_name || lead.firstName || '',
-      lname: lead.last_name || lead.lastName || '',
+      fname: firstName,
+      lname: lastName,
       email: lead.email || '',
-      phone1: lead.phone_number || lead.phone || '',
+      phone1: phone,
       address: lead.street_address || lead.address || '',
       city: lead.city || '',
       state: lead.state || 'UT',
-      zip: lead.zip_code || lead.zip || '',
-      sourceID: 9,       // Facebook — matches existing source in PestRoutes
-      status: 2,         // Status 2 shows as new/pending lead in PestRoutes
+      zip: zip,
+      sourceID: 9,       // Facebook
+      status: 0,
       smsReminders: 1,
       emailReminders: 1,
     };
 
-    // Include ad source in notes
-    if (lead._formName) {
-      payload.customerNotes = `Facebook Lead — Ad: ${lead._formName}`;
-    }
-
-    logger.info('Creating PestRoutes customer from lead', { name: `${payload.fname} ${payload.lname}`, source: lead._formName });
+    logger.info('Creating PestRoutes customer from lead', { name: `${firstName} ${lastName}`, source: lead._formName });
 
     const response = await axios.post(`${this.baseUrl}/customer/create`, payload, {
       headers: { 'Content-Type': 'application/json' }
     });
 
-    if (response.data.success) {
-      logger.info('PestRoutes customer created', { customerID: response.data.result });
-      return { success: true, customerID: response.data.result };
-    } else {
-      throw new Error(`PestRoutes error: ${JSON.stringify(response.data)}`);
+    if (!response.data.success) {
+      throw new Error(`PestRoutes customer/create error: ${JSON.stringify(response.data)}`);
     }
+
+    const customerID = response.data.result;
+    logger.info('PestRoutes customer created', { customerID });
+
+    // Create a task assigned to Austin (employeeID 8) so the lead shows up in PestRoutes tasks
+    try {
+      const name    = `${firstName} ${lastName}`.trim();
+      const adLabel = lead._formName ? ` | Ad: ${lead._formName}` : '';
+      const taskText = `🚨 NEW FACEBOOK LEAD - CALL NOW! ${name} | ${phone || 'no phone'} | Zip: ${zip}${adLabel}`;
+
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const dueDate = tomorrow.toISOString().split('T')[0];
+
+      const taskResponse = await axios.post(`${this.baseUrl}/task/create`, {
+        authenticationKey: this.authKey,
+        authenticationToken: this.authToken,
+        customerID: customerID,
+        assignedTo: 8, // Austin Lockwood
+        dueDate: dueDate,
+        type: 0,
+        category: 1,
+        task: taskText
+      }, { headers: { 'Content-Type': 'application/json' } });
+
+      if (taskResponse.data.success) {
+        logger.info('PestRoutes task created', { taskID: taskResponse.data.result, customerID });
+      } else {
+        logger.warn('PestRoutes task creation failed (non-fatal)', taskResponse.data);
+      }
+    } catch (taskErr) {
+      logger.warn('Task creation error (non-fatal):', taskErr.message);
+    }
+
+    return { success: true, customerID };
   }
 }
 
