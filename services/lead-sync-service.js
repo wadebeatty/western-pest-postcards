@@ -3,13 +3,14 @@ const logger = require('../utils/logger');
 
 class LeadSyncService {
   constructor() {
-    this.pageAccessToken = process.env.META_PAGE_TOKEN || 'EAA0fbd4GgOYBRLwzZCQ0jlBw8SPciGUUch5hDD5PzgvWWUeIBtfbG46sS7V7xKKN82pZAP5hMWeNZA6My3Dkwhz2RVTU9tsdz9L6BilyYkTTl8czPzkDj9U1wZCKlBH9oJBsq332vvJ1lhAI75sxN7780ucPF7SkiWp8TKLEW13Qy6vnYXV939dRJ9R9GVujqwOsvYlFLcsgZBLQ0fwKMSEQCAEL39VY9Mxf3pIMLE2V8kaINNGBaIZCk1k6PQ0GHnHkruRXIFNlaEdHbdJAZDZD';
+    this.pageAccessToken = process.env.META_PAGE_TOKEN || 'EAA0fbd4GgOYBRNQrjwCg7ZA9cuuDOFDXjSBSrirq5b7uMzJVlgmCZAIX8oxNLTT2crnZB0ZBj8KnTo833eSdPF0npRGgnrsrvUJFQOzf5NUa90qCfZAoZBs1ZAxRZAhpuCGP6JE5b1ZBAmkItfZC8IERgjHqp28cgWTMa7Lz69AodLIn9fusq8rBLAjzAe2hUd86GZBZC1LGyAZDZD';
     // All active Western Pest lead forms — { id, name }
     this.forms = [
       { id: '1233959305559072', name: 'Spring Leads 2026'              },
       { id: '818330490677734',  name: 'Scorpion Season 2026'           },
       { id: '2602191403508867', name: 'Rodent Control — Artesia Terrace' },
-      { id: '1647893753069220', name: 'Artesia Rodent Control 2026'    }
+      { id: '1647893753069220', name: 'Artesia Rodent Control 2026'    },
+      { id: '963255839499117',  name: 'WPC - Get Quote Mar 2026'       }
     ];
     this.lastChecked = new Date(Date.now() - 5 * 60 * 1000).toISOString();
     this.processedLeads = new Set();
