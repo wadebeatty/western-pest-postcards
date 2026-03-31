@@ -60,7 +60,7 @@ class PestRoutesService {
         authenticationKey: this.authKey,
         authenticationToken: this.authToken,
         customerID: customerID,
-        assignedTo: 8, // Austin Lockwood
+        assignedTo: 180, // Kayla Irvine
         dueDate: dueDate,
         type: 0,
         category: 1,
