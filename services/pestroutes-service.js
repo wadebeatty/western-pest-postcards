@@ -52,9 +52,8 @@ class PestRoutesService {
       const adLabel = lead._formName ? ` | Ad: ${lead._formName}` : '';
       const taskText = `🚨 NEW FACEBOOK LEAD - CALL NOW! ${name} | ${phone || 'no phone'} | Zip: ${zip}${adLabel}`;
 
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      const dueDate = tomorrow.toISOString().split('T')[0];
+      const today = new Date();
+      const dueDate = today.toISOString().split('T')[0];
 
       const taskResponse = await axios.post(`${this.baseUrl}/task/create`, {
         authenticationKey: this.authKey,
