@@ -21,12 +21,13 @@ class LeadSyncService {
     for (const form of this.forms) {
       try {
         const leads = await this.fetchLeadsFromForm(form.id);
-        // Tag each lead with the form/ad name
         leads.forEach(l => l._formName = form.name);
         allLeads.push(...leads);
       } catch (err) {
         logger.warn(`Failed to fetch leads from form ${form.id}:`, err.message);
       }
+      // Small delay between form fetches to avoid rate limiting
+      await new Promise(r => setTimeout(r, 2000));
     }
     return allLeads;
   }

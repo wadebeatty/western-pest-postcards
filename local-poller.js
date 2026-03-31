@@ -11,7 +11,8 @@ const pestRoutesService = require('./services/pestroutes-service');
 const logger = require('./utils/logger');
 
 logger.info('🚀 Western Pest Lead Poller starting...');
-logger.info('Polling Meta every 20 seconds for new leads');
+logger.info('Polling Meta every 5 minutes for new leads');
 logger.info('Alerts will fire via iMessage to team');
 
-leadSyncService.startPolling(pestRoutesService, 20 * 1000);
+// Poll every 5 minutes — Meta rate limits lead API at high frequency
+leadSyncService.startPolling(pestRoutesService, 5 * 60 * 1000);
