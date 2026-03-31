@@ -3,7 +3,7 @@ const logger = require('../utils/logger');
 
 class LeadSyncService {
   constructor() {
-    this.pageAccessToken = process.env.META_PAGE_TOKEN || 'EAA0fbd4GgOYBRIGSstS7NleS7lfrwZCDZCB0tQTiICtKIIpgYXNSANS7dZCczCsfeEQM0oa4VjSmWaySFl6TZAcCoLe2atwhcbGpqZCDOhQULvTvmzwgltBmySFRbwt3Dss8UF2osd03Gkmm43Sh4sXqzNCHGXeC1lN8UZAdV4r4ZArxXZAZCEZCrZCoVzMRNsPUZA0guFlHdlaKbUyMZCFKhDeXPVx61e8OnM4xVBDxIZAZBTV';
+    this.pageAccessToken = process.env.META_PAGE_TOKEN || 'EAA0fbd4GgOYBRLwzZCQ0jlBw8SPciGUUch5hDD5PzgvWWUeIBtfbG46sS7V7xKKN82pZAP5hMWeNZA6My3Dkwhz2RVTU9tsdz9L6BilyYkTTl8czPzkDj9U1wZCKlBH9oJBsq332vvJ1lhAI75sxN7780ucPF7SkiWp8TKLEW13Qy6vnYXV939dRJ9R9GVujqwOsvYlFLcsgZBLQ0fwKMSEQCAEL39VY9Mxf3pIMLE2V8kaINNGBaIZCk1k6PQ0GHnHkruRXIFNlaEdHbdJAZDZD';
     // All active Western Pest lead forms — { id, name }
     this.forms = [
       { id: '1233959305559072', name: 'Spring Leads 2026'              },
