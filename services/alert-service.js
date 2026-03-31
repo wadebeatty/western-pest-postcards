@@ -2,22 +2,23 @@ const { execSync } = require('child_process');
 const logger = require('../utils/logger');
 
 const TEAM = [
-  { name: 'Wade',      phone: '+14356321400' },
-  { name: 'Austin',   phone: '+14358175245' },
-  { name: 'Chris',    phone: '+14356190274' },
-  { name: 'Leesa',    phone: '+14358173626' },
-  { name: 'Dawn',     phone: '+18012442471' },
-  { name: 'Katherine',phone: '+14352162425' }
+  { name: 'Wade',      phone: '+14356321400', service: 'imessage' },
+  { name: 'Austin',   phone: '+14358175245', service: 'imessage' },
+  { name: 'Chris',    phone: '+14356190274', service: 'imessage' },
+  { name: 'Leesa',    phone: '+14358173626', service: 'imessage' },
+  { name: 'Dawn',     phone: '+18012442471', service: 'imessage' },
+  { name: 'Katherine',phone: '+14358176331', service: 'sms'      },  // Android
+  { name: 'Katherine (backup)', phone: '+14352162425', service: 'imessage' }
 ];
 
 class AlertService {
-  sendiMessage(phone, message) {
+  sendMessage(phone, message, service) {
     try {
       const escaped = message.replace(/"/g, '\\"').replace(/\n/g, ' ');
-      execSync(`imsg send --to "${phone}" --text "${escaped}" --service imessage`, { timeout: 10000 });
+      execSync(`imsg send --to "${phone}" --text "${escaped}" --service ${service}`, { timeout: 10000 });
       return true;
     } catch (err) {
-      logger.warn(`iMessage to ${phone} failed: ${err.message}`);
+      logger.warn(`Message to ${phone} (${service}) failed: ${err.message}`);
       return false;
     }
   }
@@ -32,11 +33,11 @@ class AlertService {
 
     const alertText = `🚨 NEW FB LEAD\n${name}\n📞 ${phone}\n📍 ${address}${adSource}\nPestRoutes #${pestRoutesCustomerID}\nCALL NOW`;
 
-    logger.info('Sending lead alerts to team individually', { lead: name });
+    logger.info('Sending lead alerts to team', { lead: name });
 
     for (const member of TEAM) {
-      const ok = this.sendiMessage(member.phone, alertText);
-      logger.info(`Alert to ${member.name}: ${ok ? 'sent ✅' : 'failed ❌'}`);
+      const ok = this.sendMessage(member.phone, alertText, member.service);
+      logger.info(`Alert to ${member.name} (${member.service}): ${ok ? 'sent ✅' : 'failed ❌'}`);
     }
   }
 }

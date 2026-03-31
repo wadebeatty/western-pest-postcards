@@ -75,6 +75,42 @@ class PestRoutesService {
       logger.warn('Task creation error (non-fatal):', taskErr.message);
     }
 
+    // Add "New Customer Lead" flag (genericFlagID 257)
+    try {
+      await axios.post(`${this.baseUrl}/genericFlagAssignment/create`, {
+        authenticationKey: this.authKey,
+        authenticationToken: this.authToken,
+        genericFlagID: 257,
+        entityID: customerID,
+        type: 'CUST'
+      }, { headers: { 'Content-Type': 'application/json' } });
+      logger.info('New Customer Lead flag added', { customerID });
+    } catch (flagErr) {
+      logger.warn('Flag creation error (non-fatal):', flagErr.message);
+    }
+
+    // Add Red Note so it shows visually on the customer card
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const noteName = `${firstName} ${lastName}`.trim();
+      const notePhone = phone || 'no phone';
+      const adLabel = lead._formName ? ` | Ad: ${lead._formName}` : '';
+      await axios.post(`${this.baseUrl}/note/create`, {
+        authenticationKey: this.authKey,
+        authenticationToken: this.authToken,
+        customerID: customerID,
+        typeID: 8,
+        contactType: 'Red Notes',
+        date: today,
+        notes: `NEW FACEBOOK LEAD - CALL NOW! ${noteName} | ${notePhone} | Zip: ${zip}${adLabel}`,
+        showCustomer: 0,
+        showTech: 0
+      }, { headers: { 'Content-Type': 'application/json' } });
+      logger.info('Red Note added', { customerID });
+    } catch (noteErr) {
+      logger.warn('Red Note error (non-fatal):', noteErr.message);
+    }
+
     return { success: true, customerID };
   }
 }
