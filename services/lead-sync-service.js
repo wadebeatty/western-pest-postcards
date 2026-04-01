@@ -66,6 +66,7 @@ class LeadSyncService {
         if (this.processedLeads.has(lead.id)) continue;
 
         const fields = this.parseLeadFields(lead.field_data || []);
+        fields._submittedAt = lead.created_time || null;
         logger.info('Processing lead', { leadId: lead.id, name: `${fields.first_name} ${fields.last_name}` });
 
         const result = await pestRoutesService.createCustomerFromLead(fields);

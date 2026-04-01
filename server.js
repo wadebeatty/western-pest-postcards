@@ -120,6 +120,7 @@ app.post('/webhook/meta-lead', async (req, res) => {
         for (const f of leadData.field_data) {
           fields[f.name] = f.values[0];
         }
+        fields._submittedAt = leadData.created_time || new Date().toISOString();
 
         logger.info('Meta lead received', { leadID: leadData.leadgen_id, name: `${fields.first_name} ${fields.last_name}` });
 

@@ -62,8 +62,13 @@ class AlertService {
     const phone     = lead.phone_number || lead.phone || 'N/A';
     const address   = [lead.street_address, lead.city, lead.state].filter(Boolean).join(', ') || `Zip: ${lead.zip_code || 'N/A'}`;
     const adSource  = lead._formName ? `\nAd: ${lead._formName}` : '';
+    let submittedAt = '';
+    if (lead._submittedAt) {
+      const d = new Date(lead._submittedAt);
+      submittedAt = `\nSubmitted: ${d.toLocaleString('en-US', { timeZone: 'America/Denver', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true })} MDT`;
+    }
 
-    const alertText = `NEW FB LEAD\n${name}\nPhone: ${phone}\nAddress: ${address}${adSource}\nPestRoutes #${pestRoutesCustomerID}\nCALL NOW`;
+    const alertText = `NEW FB LEAD\n${name}\nPhone: ${phone}\nAddress: ${address}${adSource}${submittedAt}\nPestRoutes #${pestRoutesCustomerID}\nCALL NOW`;
 
     logger.info('Sending lead alerts via Twilio SMS', { lead: name });
 
