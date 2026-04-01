@@ -43,6 +43,18 @@ class AlertService {
     });
   }
 
+  sendImessage(phone, message) {
+    const { execSync } = require('child_process');
+    try {
+      const escaped = message.replace(/"/g, '\\"');
+      execSync(`imsg send --to "${phone}" --text "${escaped}" --service imessage`, { timeout: 10000 });
+      return true;
+    } catch (err) {
+      logger.warn(`iMessage to ${phone} failed: ${err.message}`);
+      return false;
+    }
+  }
+
   async sendLeadAlert(lead, pestRoutesCustomerID) {
     const firstName = lead.first_name || lead.full_name?.split(' ')[0] || '';
     const lastName  = lead.last_name  || lead.full_name?.split(' ').slice(1).join(' ') || '';
@@ -59,6 +71,10 @@ class AlertService {
       const ok = await this.sendSMS(member.phone, alertText);
       logger.info(`SMS to ${member.name} (${member.phone}): ${ok ? 'sent ✅' : 'failed ❌'}`);
     }
+
+    // Always send iMessage directly to Wade as backup
+    const imsgOk = this.sendImessage('+14356321400', alertText);
+    logger.info(`iMessage backup to Wade: ${imsgOk ? 'sent ✅' : 'failed ❌'}`);
   }
 }
 
