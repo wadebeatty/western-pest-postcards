@@ -1,14 +1,14 @@
 const { execSync } = require('child_process');
 const logger = require('../utils/logger');
 
-// New Lead Chat group iMessage chat ID
-const NEW_LEAD_CHAT_ID = 'f1e38812f1324ccfb22f4a14677a639b';
+// New Lead Chat group — row ID 21 in chat.db
+const NEW_LEAD_CHAT_ROW_ID = 21;
 
 class AlertService {
   sendToGroup(message) {
     try {
       const escaped = message.replace(/"/g, '\\"');
-      execSync(`imsg send --chat-id "${NEW_LEAD_CHAT_ID}" --text "${escaped}"`, { timeout: 10000 });
+      execSync(`imsg send --chat-id ${NEW_LEAD_CHAT_ROW_ID} --text "${escaped}"`, { timeout: 10000 });
       return true;
     } catch (err) {
       logger.warn(`Group message failed: ${err.message}`);
