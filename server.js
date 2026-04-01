@@ -125,8 +125,11 @@ app.post('/webhook/meta-lead', async (req, res) => {
 
         // Create in PestRoutes
         const result = await pestRoutesService.createCustomerFromLead(fields);
-
         logger.info('Lead pushed to PestRoutes', { customerID: result.customerID });
+
+        // Fire SMS alerts to team
+        const alertService = require('./services/alert-service');
+        await alertService.sendLeadAlert(fields, result.customerID);
       }
     }
 
