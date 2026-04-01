@@ -45,14 +45,37 @@ class AlertService {
 
   sendImessage(phone, message) {
     const { execSync } = require('child_process');
-    try {
-      const escaped = message.replace(/"/g, '\\"');
-      execSync(`imsg send --to "${phone}" --text "${escaped}" --service imessage`, { timeout: 10000 });
-      return true;
-    } catch (err) {
-      logger.warn(`iMessage to ${phone} failed: ${err.message}`);
-      return false;
+    const escaped = message.replace(/"/g, '\\"');
+    // Try send, restart Messages if hung, retry once
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        if (attempt > 0) {
+          execSync('pkill -x Messages; sleep 2; open -a Messages; sleep 3', { timeout: 8000 });
+        }
+        execSync(`imsg send --to "${phone}" --text "${escaped}" --service imessage`, { timeout: 10000 });
+        return true;
+      } catch (err) {
+        logger.warn(`iMessage to ${phone} attempt ${attempt + 1} failed: ${err.message}`);
+      }
     }
+    return false;
+  }
+
+  sendGroupImessage(message) {
+    const { execSync } = require('child_process');
+    const escaped = message.replace(/"/g, '\\"');
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        if (attempt > 0) {
+          execSync('pkill -x Messages; sleep 2; open -a Messages; sleep 3', { timeout: 8000 });
+        }
+        execSync(`imsg send --chat-id 21 --text "${escaped}"`, { timeout: 10000 });
+        return true;
+      } catch (err) {
+        logger.warn(`Group iMessage attempt ${attempt + 1} failed: ${err.message}`);
+      }
+    }
+    return false;
   }
 
   async sendLeadAlert(lead, pestRoutesCustomerID) {
@@ -65,10 +88,10 @@ class AlertService {
     let submittedAt = '';
     if (lead._submittedAt) {
       const d = new Date(lead._submittedAt);
-      submittedAt = `\nSubmitted: ${d.toLocaleString('en-US', { timeZone: 'America/Denver', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true })} MDT`;
+      submittedAt = ` | Submitted: ${d.toLocaleString('en-US', { timeZone: 'America/Denver', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true })} MDT`;
     }
 
-    const alertText = `NEW FB LEAD\n${name}\nPhone: ${phone}\nAddress: ${address}${adSource}${submittedAt}\nPestRoutes #${pestRoutesCustomerID}\nCALL NOW`;
+    const alertText = `NEW LEAD: ${name} | ${phone} | ${address}${adSource}${submittedAt} | PestRoutes #${pestRoutesCustomerID} | CALL NOW`;
 
     logger.info('Sending lead alerts via Twilio SMS', { lead: name });
 
@@ -77,9 +100,13 @@ class AlertService {
       logger.info(`SMS to ${member.name} (${member.phone}): ${ok ? 'sent ✅' : 'failed ❌'}`);
     }
 
-    // Always send iMessage directly to Wade as backup
+    // Send to New Lead Chat group
+    const groupOk = this.sendGroupImessage(alertText);
+    logger.info(`Group iMessage: ${groupOk ? 'sent ✅' : 'failed ❌'}`);
+
+    // Send directly to Wade as backup
     const imsgOk = this.sendImessage('+14356321400', alertText);
-    logger.info(`iMessage backup to Wade: ${imsgOk ? 'sent ✅' : 'failed ❌'}`);
+    logger.info(`iMessage to Wade: ${imsgOk ? 'sent ✅' : 'failed ❌'}`);
   }
 }
 
