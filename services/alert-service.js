@@ -1,9 +1,9 @@
 const https = require('https');
 const logger = require('../utils/logger');
 
-const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
-const TWILIO_AUTH_TOKEN  = process.env.TWILIO_AUTH_TOKEN;
-const TWILIO_FROM        = process.env.TWILIO_FROM || '+14359007582';
+const TWILIO_ACCOUNT_SID      = process.env.TWILIO_ACCOUNT_SID;
+const TWILIO_AUTH_TOKEN       = process.env.TWILIO_AUTH_TOKEN;
+const TWILIO_MESSAGING_SID    = process.env.TWILIO_MESSAGING_SID || 'MG6feb36316516bb7844168a68423d6ede';
 
 // Team members to alert on new lead
 const TEAM = [
@@ -18,7 +18,7 @@ const TEAM = [
 class AlertService {
   sendSMS(to, body) {
     return new Promise((resolve) => {
-      const params = new URLSearchParams({ To: to, From: TWILIO_FROM, Body: body }).toString();
+      const params = new URLSearchParams({ To: to, MessagingServiceSid: TWILIO_MESSAGING_SID, Body: body }).toString();
       const options = {
         hostname: 'api.twilio.com',
         path: `/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`,
