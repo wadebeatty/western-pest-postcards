@@ -1,19 +1,46 @@
-const { execSync } = require('child_process');
+const https = require('https');
 const logger = require('../utils/logger');
 
-// New Lead Chat group — row ID 21 in chat.db
-const NEW_LEAD_CHAT_ROW_ID = 21;
+const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
+const TWILIO_AUTH_TOKEN  = process.env.TWILIO_AUTH_TOKEN;
+const TWILIO_FROM        = process.env.TWILIO_FROM || '+14359007582';
+
+// Team members to alert on new lead
+const TEAM = [
+  { name: 'Wade',      phone: '+14356321400' },
+  { name: 'Austin',   phone: '+14358175245' },
+  { name: 'Chris',    phone: '+14356190274' },
+  { name: 'Leesa',    phone: '+14358173626' },
+  { name: 'Dawn',     phone: '+18012442471' },
+  { name: 'Kayla',    phone: '+14358176331' },
+];
 
 class AlertService {
-  sendToGroup(message) {
-    try {
-      const escaped = message.replace(/"/g, '\\"');
-      execSync(`imsg send --chat-id ${NEW_LEAD_CHAT_ROW_ID} --text "${escaped}"`, { timeout: 10000 });
-      return true;
-    } catch (err) {
-      logger.warn(`Group message failed: ${err.message}`);
-      return false;
-    }
+  sendSMS(to, body) {
+    return new Promise((resolve) => {
+      const params = new URLSearchParams({ To: to, From: TWILIO_FROM, Body: body }).toString();
+      const options = {
+        hostname: 'api.twilio.com',
+        path: `/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`,
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization': 'Basic ' + Buffer.from(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`).toString('base64'),
+          'Content-Length': Buffer.byteLength(params),
+        },
+      };
+      const req = https.request(options, (res) => {
+        let data = '';
+        res.on('data', chunk => data += chunk);
+        res.on('end', () => {
+          const json = JSON.parse(data);
+          resolve(json.status === 'queued' || json.status === 'sent');
+        });
+      });
+      req.on('error', () => resolve(false));
+      req.write(params);
+      req.end();
+    });
   }
 
   async sendLeadAlert(lead, pestRoutesCustomerID) {
@@ -22,13 +49,16 @@ class AlertService {
     const name      = `${firstName} ${lastName}`.trim() || 'Unknown';
     const phone     = lead.phone_number || lead.phone || 'N/A';
     const address   = [lead.street_address, lead.city, lead.state].filter(Boolean).join(', ') || `Zip: ${lead.zip_code || 'N/A'}`;
-    const adSource  = lead._formName ? `\n📣 ${lead._formName}` : '';
+    const adSource  = lead._formName ? `\nAd: ${lead._formName}` : '';
 
-    const alertText = `🚨 NEW FB LEAD\n${name}\n📞 ${phone}\n📍 ${address}${adSource}\nPestRoutes #${pestRoutesCustomerID}\nCALL NOW`;
+    const alertText = `NEW FB LEAD\n${name}\nPhone: ${phone}\nAddress: ${address}${adSource}\nPestRoutes #${pestRoutesCustomerID}\nCALL NOW`;
 
-    logger.info('Sending lead alert to New Lead Chat', { lead: name });
-    const ok = this.sendToGroup(alertText);
-    logger.info(`Group alert: ${ok ? 'sent ✅' : 'failed ❌'}`);
+    logger.info('Sending lead alerts via Twilio SMS', { lead: name });
+
+    for (const member of TEAM) {
+      const ok = await this.sendSMS(member.phone, alertText);
+      logger.info(`SMS to ${member.name} (${member.phone}): ${ok ? 'sent ✅' : 'failed ❌'}`);
+    }
   }
 }
 
