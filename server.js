@@ -170,9 +170,7 @@ app.listen(port, () => {
   logger.info(`Health check: http://localhost:${port}/health`);
   logger.info(`Webhook endpoint: POST http://localhost:${port}/webhook/customer-created`);
 
-  // Start Meta lead → PestRoutes sync polling
-  const leadSyncService = require('./services/lead-sync-service');
-  const pestRoutesService = require('./services/pestroutes-service');
-  leadSyncService.startPolling(pestRoutesService, 20 * 1000);
-  logger.info('Meta lead sync active — polling every 20 seconds');
+  // Polling disabled — using Meta webhooks instead (webhook/meta-lead)
+  // leadSyncService.startPolling(pestRoutesService, 20 * 1000);
+  logger.info('Meta lead sync via webhook — polling disabled');
 });
