@@ -141,6 +141,17 @@ app.post('/webhook/meta-lead', async (req, res) => {
   }
 });
 
+// Twilio SMS delivery status callback
+app.post('/webhook/twilio-status', (req, res) => {
+  const { To, MessageStatus, ErrorCode, MessageSid } = req.body;
+  if (MessageStatus === 'failed' || MessageStatus === 'undelivered') {
+    logger.warn('SMS delivery failed', { to: To, status: MessageStatus, error: ErrorCode, sid: MessageSid });
+  } else {
+    logger.info('SMS status update', { to: To, status: MessageStatus, sid: MessageSid });
+  }
+  res.sendStatus(200);
+});
+
 // Meta webhook verification (required by Facebook)
 app.get('/webhook/meta-lead', (req, res) => {
   const VERIFY_TOKEN = process.env.META_WEBHOOK_VERIFY_TOKEN || 'western-pest-2026';
