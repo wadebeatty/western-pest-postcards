@@ -11,9 +11,8 @@ const pestRoutesService = require('./services/pestroutes-service');
 const logger = require('./utils/logger');
 
 logger.info('🚀 Western Pest Lead Poller starting...');
-logger.info('Polling Meta every 5 minutes for new leads');
-logger.info('Alerts will fire via iMessage to team');
+logger.info('Polling Meta every 2 minutes for new leads');
+logger.info('Alerts will fire via iMessage + Connecteam to team');
 
-// Poll every 10 minutes — webhook on Render handles real-time processing
-// This is a backup to catch anything the webhook misses + fires iMessage alerts
-leadSyncService.startPolling(pestRoutesService, 10 * 60 * 1000);
+// Poll every 2 minutes — fast enough to catch leads quickly, well within Meta API limits
+leadSyncService.startPolling(pestRoutesService, 2 * 60 * 1000);

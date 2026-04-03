@@ -1,5 +1,12 @@
 const https = require('https');
+const axios = require('axios');
 const logger = require('../utils/logger');
+
+// Connecteam config
+const CONNECTEAM_CLIENT_ID     = 'ct_aufqbuvrkbdilqea_4924330d2bfe5889210cac03b8e40fce';
+const CONNECTEAM_CLIENT_SECRET = 'q_fJUhXjUyvQ_mKnudqqP1qLYPEqQJ_vQXH64yZ0vc8';
+const CONNECTEAM_CONVERSATION  = 'a9a11b2d-6179-4488-99a2-f9d9b1d99eed'; // Office Numbers
+const CONNECTEAM_PUBLISHER_ID  = 1269379; // Western Pest Control publisher
 
 const TWILIO_ACCOUNT_SID      = process.env.TWILIO_ACCOUNT_SID;
 const TWILIO_AUTH_TOKEN       = process.env.TWILIO_AUTH_TOKEN;
@@ -107,6 +114,35 @@ class AlertService {
     // Send directly to Wade as backup
     const imsgOk = this.sendImessage('+14356321400', alertText);
     logger.info(`iMessage to Wade: ${imsgOk ? 'sent ✅' : 'failed ❌'}`);
+
+    // Send to Connecteam Office Numbers chat
+    try {
+      await this.sendConnecteamMessage(alertText);
+      logger.info('Connecteam Office Numbers: sent ✅');
+    } catch (err) {
+      logger.warn('Connecteam message failed:', err.message);
+    }
+  }
+
+  async getConnecteamToken() {
+    const params = new URLSearchParams({ grant_type: 'client_credentials' });
+    const creds = Buffer.from(`${CONNECTEAM_CLIENT_ID}:${CONNECTEAM_CLIENT_SECRET}`).toString('base64');
+    const res = await axios.post('https://api.connecteam.com/oauth/v1/token', params.toString(), {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': `Basic ${creds}`
+      }
+    });
+    return res.data.access_token;
+  }
+
+  async sendConnecteamMessage(text) {
+    const token = await this.getConnecteamToken();
+    await axios.post(
+      `https://api.connecteam.com/chat/v1/conversations/${CONNECTEAM_CONVERSATION}/message`,
+      { text: text.slice(0, 500), senderId: CONNECTEAM_PUBLISHER_ID },
+      { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
+    );
   }
 }
 
